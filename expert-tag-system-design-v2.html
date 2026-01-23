@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>专家职级与标签体系设计文档 V2</title>
+    <style>
+        :root {
+            --primary-color: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary-color: #8b5cf6;
+            --accent-color: #f59e0b;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-color: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --code-bg: #f1f5f9;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --info-color: #3b82f6;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.7;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 50%, #ec4899 100%);
+            color: white;
+            padding: 60px 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header h1 { font-size: 2.5rem; font-weight: 700; margin-bottom: 16px; }
+        .header .version-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-left: 10px;
+        }
+        .header .subtitle { font-size: 1.1rem; opacity: 0.95; max-width: 900px; margin: 0 auto; }
+        .header .meta { margin-top: 20px; font-size: 0.9rem; opacity: 0.8; }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+
+        .toc {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .toc h2 { font-size: 1.3rem; margin-bottom: 20px; color: var(--primary-color); }
+        .toc ul { list-style: none; columns: 2; column-gap: 40px; }
+        .toc li { margin-bottom: 10px; }
+        .toc a { color: var(--text-color); text-decoration: none; }
+        .toc a:hover { color: var(--primary-color); }
+
+        section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            color: var(--primary-color);
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--border-color);
+        }
+        h3 { font-size: 1.3rem; color: var(--text-color); margin: 30px 0 16px 0; }
+        h4 { font-size: 1.1rem; color: var(--text-muted); margin: 24px 0 12px 0; }
+
+        p { margin-bottom: 16px; }
+        ul, ol { margin-bottom: 16px; padding-left: 24px; }
+        li { margin-bottom: 8px; }
+
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.95rem; }
+        th, td { padding: 12px 16px; text-align: left; border: 1px solid var(--border-color); }
+        th { background: var(--code-bg); font-weight: 600; }
+        tr:hover { background: var(--bg-color); }
+
+        code {
+            background: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.9em;
+            color: #e11d48;
+        }
+
+        pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.8rem;
+            line-height: 1.5;
+        }
+        pre code { background: none; color: inherit; padding: 0; }
+
+        .diagram {
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.7rem;
+            line-height: 1.4;
+            white-space: pre;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%);
+            border-left: 4px solid var(--primary-color);
+            padding: 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 20px 0;
+        }
+        .highlight-box.warning {
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+            border-left-color: var(--warning-color);
+        }
+        .highlight-box.success {
+            background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+            border-left-color: var(--success-color);
+        }
+
+        /* 双轨制 */
+        .dual-track { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 30px 0; }
+        .track-card {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-radius: 12px;
+            padding: 24px;
+            border: 2px solid var(--border-color);
+        }
+        .track-card.primary { border-color: var(--primary-color); }
+        .track-card.secondary { border-color: var(--secondary-color); }
+        .track-card h4 { margin: 0 0 8px 0; font-size: 1.2rem; }
+        .track-card.primary h4 { color: var(--primary-color); }
+        .track-card.secondary h4 { color: var(--secondary-color); }
+        .track-card .subtitle { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 16px; }
+        .track-card ul { margin: 0; padding-left: 20px; }
+
+        /* 职级金字塔 */
+        .level-pyramid { display: flex; flex-direction: column; align-items: center; gap: 10px; margin: 30px 0; }
+        .level-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px 24px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            text-align: center;
+        }
+        .level-committee { background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%); width: 200px; }
+        .level-l3 { background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%); width: 280px; }
+        .level-l2 { background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%); width: 360px; }
+        .level-l1 { background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%); width: 440px; }
+        .level-item .icon { font-size: 1.5rem; margin-right: 10px; }
+        .level-item .info { text-align: left; }
+        .level-item .name { font-size: 1.1rem; }
+        .level-item .desc { font-size: 0.8rem; opacity: 0.9; font-weight: normal; }
+
+        /* 标签分类 */
+        .tag-category {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin: 4px;
+        }
+        .tag-identity { background: #dbeafe; color: #1e40af; }
+        .tag-qualification { background: #dcfce7; color: #166534; }
+        .tag-behavior { background: #fef3c7; color: #92400e; }
+        .tag-experience { background: #f3e8ff; color: #7c3aed; }
+        .tag-source { background: #fce7f3; color: #be185d; }
+        .tag-operation { background: #fee2e2; color: #991b1b; }
+
+        /* 流程图 */
+        .flow-diagram { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 30px 0; }
+        .flow-step {
+            background: white;
+            border: 2px solid var(--primary-color);
+            border-radius: 8px;
+            padding: 15px 20px;
+            text-align: center;
+            min-width: 100px;
+            position: relative;
+        }
+        .flow-step::after {
+            content: '→';
+            position: absolute;
+            right: -20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--primary-color);
+            font-size: 1.2rem;
+        }
+        .flow-step:last-child::after { display: none; }
+        .flow-step .step-name { font-weight: 600; color: var(--primary-color); margin-bottom: 8px; }
+        .flow-step .step-tags { font-size: 0.75rem; color: var(--text-muted); }
+
+        /* 职级卡片 */
+        .level-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin: 30px 0; }
+        .level-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .level-card .header-row { display: flex; align-items: center; margin-bottom: 16px; }
+        .level-card .level-badge { font-size: 2rem; margin-right: 12px; }
+        .level-card .level-info h5 { margin: 0; font-size: 1.2rem; }
+        .level-card .level-info .code { color: var(--text-muted); font-size: 0.9rem; }
+        .level-card .grant-type {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-bottom: 12px;
+            margin-right: 8px;
+        }
+        .level-card .grant-type.priori { background: #dbeafe; color: #1e40af; }
+        .level-card .grant-type.posteriori { background: #fef3c7; color: #92400e; }
+        .level-card h6 { font-size: 0.9rem; color: var(--text-muted); margin: 12px 0 8px 0; }
+        .level-card ul { margin: 0; padding-left: 18px; font-size: 0.9rem; }
+        .level-card li { margin-bottom: 4px; }
+
+        /* 成长要素 */
+        .growth-factors { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 30px 0; }
+        .growth-factor {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+        .growth-factor .icon { font-size: 2rem; margin-bottom: 8px; }
+        .growth-factor .name { font-weight: 600; margin-bottom: 4px; }
+        .growth-factor .weight { color: var(--primary-color); font-size: 0.9rem; }
+
+        /* 荣誉墙 */
+        .honor-wall-preview {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border-radius: 12px;
+            padding: 30px;
+            color: white;
+            margin: 30px 0;
+        }
+        .honor-wall-preview h4 { color: white; margin: 0 0 20px 0; text-align: center; }
+        .honor-section {
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+        .honor-section:last-child { margin-bottom: 0; }
+        .honor-section h5 { color: rgba(255,255,255,0.8); font-size: 0.9rem; margin: 0 0 12px 0; }
+        .my-levels { display: flex; gap: 20px; flex-wrap: wrap; }
+        .my-level-item { display: flex; align-items: center; gap: 10px; }
+        .my-level-item .icon { font-size: 1.5rem; }
+        .my-level-item .info .domain { font-size: 0.85rem; opacity: 0.8; }
+        .my-level-item .info .level { font-weight: 600; }
+        .my-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+        .my-tag {
+            background: rgba(255,255,255,0.2);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+        }
+        .achievements { display: flex; gap: 16px; flex-wrap: wrap; }
+        .achievement-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.1);
+            padding: 8px 12px;
+            border-radius: 20px;
+        }
+        .achievement-badge .icon { font-size: 1.2rem; }
+        .achievement-badge .name { font-size: 0.9rem; }
+
+        /* 总结 */
+        .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 30px 0; }
+        .summary-item {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+        .summary-item .icon { font-size: 2rem; margin-bottom: 8px; }
+        .summary-item .title { font-weight: 600; margin-bottom: 4px; }
+        .summary-item .desc { font-size: 0.85rem; color: var(--text-muted); }
+
+        .key-points {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border-radius: 12px;
+            padding: 24px;
+            margin: 30px 0;
+        }
+        .key-points h4 { color: #166534; margin: 0 0 16px 0; }
+        .key-points ol { margin: 0; padding-left: 24px; }
+        .key-points li { margin-bottom: 8px; }
+        .key-points strong { color: #166534; }
+
+        .footer { text-align: center; padding: 40px 20px; color: var(--text-muted); font-size: 0.9rem; }
+
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.8rem; }
+            .toc ul { columns: 1; }
+            .dual-track, .level-cards, .growth-factors, .summary-grid { grid-template-columns: 1fr; }
+            .level-item { width: 100% !important; max-width: 300px; }
+            section { padding: 24px; }
+            pre { font-size: 0.7rem; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>专家职级与标签体系设计文档 <span class="version-badge">V2.0</span></h1>
+        <p class="subtitle">核心理念：<strong>用职级体系管理核心能力认证，用标签体系构建完整画像，把专家困在算法里</strong></p>
+        <p class="meta">设计时间：2026-01-23 | 融合：职级体系 + 完整标签体系</p>
+    </header>
+
+    <div class="container">
+        <!-- 目录 -->
+        <nav class="toc">
+            <h2>目录</h2>
+            <ul>
+                <li><a href="#section1">一、设计概述</a></li>
+                <li><a href="#section2">二、职级体系设计</a></li>
+                <li><a href="#section3">三、标签体系设计（完整版）</a></li>
+                <li><a href="#section4">四、岗位与职级/标签的关系</a></li>
+                <li><a href="#section5">五、项目准入配置</a></li>
+                <li><a href="#section6">六、职级成长体系</a></li>
+                <li><a href="#section7">七、荣誉墙与激励</a></li>
+                <li><a href="#section8">八、系统运转机制</a></li>
+                <li><a href="#section9">九、实施计划</a></li>
+                <li><a href="#section10">十、总结</a></li>
+            </ul>
+        </nav>
+
+        <!-- 一、设计概述 -->
+        <section id="section1">
+            <h2>一、设计概述</h2>
+            
+            <h3>1.1 双轨制体系架构</h3>
+            <div class="dual-track">
+                <div class="track-card primary">
+                    <h4>职级体系（主轨）</h4>
+                    <p class="subtitle">Level System - 核心能力认证</p>
+                    <ul>
+                        <li>按领域划分</li>
+                        <li>L1 → L2 → L3 → 专委会</li>
+                        <li>结构化晋升路径</li>
+                        <li>AI + 人工评估</li>
+                        <li>项目准入的核心依据</li>
+                        <li>专家可见，有荣誉感</li>
+                    </ul>
+                </div>
+                <div class="track-card secondary">
+                    <h4>标签体系（辅轨）</h4>
+                    <p class="subtitle">Tag System - 完整画像构建</p>
+                    <ul>
+                        <li>6大类完整标签体系</li>
+                        <li>全流程节点自动授予</li>
+                        <li>身份/能力/行为/经验/来源/运营 全覆盖</li>
+                        <li>项目准入的补充条件</li>
+                        <li>精细化专家画像</li>
+                        <li>支撑运营分析</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="highlight-box">
+                <p style="text-align: center; margin: 0;"><strong>项目准入判断 = 职级要求 AND/OR 标签要求</strong></p>
+            </div>
+
+            <h3>1.2 双轨制核心区别</h3>
+            <table>
+                <thead>
+                    <tr><th>维度</th><th>职级体系</th><th>标签体系</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><strong>定位</strong></td><td>核心能力认证，决定准入资格</td><td>完整画像构建，精细化运营</td></tr>
+                    <tr><td><strong>结构</strong></td><td>领域 × 等级（严格层级）</td><td>6大类 × 分组 × 值（全覆盖）</td></tr>
+                    <tr><td><strong>授予方式</strong></td><td>先验 + 后验，有晋升降级路径</td><td>全流程节点自动授予</td></tr>
+                    <tr><td><strong>主要用途</strong></td><td>项目准入的主要依据</td><td>专家筛选、运营分析、特殊处理</td></tr>
+                    <tr><td><strong>可见性</strong></td><td>专家可见，荣誉墙展示</td><td>部分可见，部分内部使用</td></tr>
+                    <tr><td><strong>数量</strong></td><td>每领域一个职级</td><td>多标签叠加</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- 二、职级体系设计 -->
+        <section id="section2">
+            <h2>二、职级体系设计</h2>
+            
+            <h3>2.1 职级结构</h3>
+            <div class="level-pyramid">
+                <div class="level-item level-committee">
+                    <span class="icon">👑</span>
+                    <div class="info">
+                        <div class="name">专家委员会 (Committee)</div>
+                        <div class="desc">后验授予 · 极少数人 · 参与平台决策</div>
+                    </div>
+                </div>
+                <div class="level-item level-l3">
+                    <span class="icon">🏆</span>
+                    <div class="info">
+                        <div class="name">L3 - 资深专家 (Senior)</div>
+                        <div class="desc">仅后验晋升 · 可带队质检 · 可担任小组长</div>
+                    </div>
+                </div>
+                <div class="level-item level-l2">
+                    <span class="icon">⭐</span>
+                    <div class="info">
+                        <div class="name">L2 - 进阶专家 (Advanced)</div>
+                        <div class="desc">先验/后验授予 · 可独立质检</div>
+                    </div>
+                </div>
+                <div class="level-item level-l1">
+                    <span class="icon">🌱</span>
+                    <div class="info">
+                        <div class="name">L1 - 初级专家 (Junior)</div>
+                        <div class="desc">先验授予 · 基础标注 · 准入门槛</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="highlight-box">
+                <p><strong>每个职级都关联到具体的三级领域，例如：</strong></p>
+                <ul style="margin-bottom: 0;">
+                    <li>化学分子领域 - L2</li>
+                    <li>代码/Python - L1</li>
+                    <li>经济金融/投资 - L3</li>
+                </ul>
+            </div>
+
+            <h3>2.2 职级定义</h3>
+            <div class="level-cards">
+                <div class="level-card">
+                    <div class="header-row">
+                        <span class="level-badge">🌱</span>
+                        <div class="level-info">
+                            <h5>L1 - 初级专家</h5>
+                            <span class="code">Junior</span>
+                        </div>
+                    </div>
+                    <span class="grant-type priori">先验授予</span>
+                    <h6>授予条件</h6>
+                    <ul>
+                        <li>相关领域学历背景（本科及以上）</li>
+                        <li>或相关领域工作经验（1年以上）</li>
+                        <li>通过岗位申请的 AI/人工审核</li>
+                    </ul>
+                    <h6>可参与工作</h6>
+                    <ul>
+                        <li>标注环节的基础标注</li>
+                        <li>需经过试标考核</li>
+                    </ul>
+                </div>
+                
+                <div class="level-card">
+                    <div class="header-row">
+                        <span class="level-badge">⭐</span>
+                        <div class="level-info">
+                            <h5>L2 - 进阶专家</h5>
+                            <span class="code">Advanced</span>
+                        </div>
+                    </div>
+                    <span class="grant-type priori">先验授予</span>
+                    <span class="grant-type posteriori">后验晋升</span>
+                    <h6>先验授予条件</h6>
+                    <ul>
+                        <li>相关领域硕士及以上学历</li>
+                        <li>或工作经验3年以上/专业资格证书</li>
+                    </ul>
+                    <h6>后验晋升条件（从L1）</h6>
+                    <ul>
+                        <li>累计完成 500+ 题目</li>
+                        <li>通过率 ≥ 90%，近30天无严重Issue</li>
+                    </ul>
+                    <h6>可参与工作</h6>
+                    <ul>
+                        <li>复杂标注、一级质检（质1）</li>
+                    </ul>
+                </div>
+                
+                <div class="level-card">
+                    <div class="header-row">
+                        <span class="level-badge">🏆</span>
+                        <div class="level-info">
+                            <h5>L3 - 资深专家</h5>
+                            <span class="code">Senior</span>
+                        </div>
+                    </div>
+                    <span class="grant-type posteriori">仅后验晋升</span>
+                    <h6>晋升条件（从L2）</h6>
+                    <ul>
+                        <li>累计完成 2000+ 题目</li>
+                        <li>通过率 ≥ 95%</li>
+                        <li>质检准确率 ≥ 92%</li>
+                        <li>近90天无严重Issue，人工审核确认</li>
+                    </ul>
+                    <h6>可参与工作</h6>
+                    <ul>
+                        <li>所有标注、二级质检（质2）、小组长</li>
+                    </ul>
+                </div>
+                
+                <div class="level-card">
+                    <div class="header-row">
+                        <span class="level-badge">👑</span>
+                        <div class="level-info">
+                            <h5>专家委员会</h5>
+                            <span class="code">Committee</span>
+                        </div>
+                    </div>
+                    <span class="grant-type posteriori">邀请+投票</span>
+                    <h6>授予条件</h6>
+                    <ul>
+                        <li>L3职级满6个月</li>
+                        <li>在该领域有突出贡献</li>
+                        <li>平台邀请 + 委员会投票通过</li>
+                    </ul>
+                    <h6>可参与工作</h6>
+                    <ul>
+                        <li>规则制定、终审、培训、荣誉顾问</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- 三、标签体系设计 -->
+        <section id="section3">
+            <h2>三、标签体系设计（完整版）</h2>
+            
+            <h3>3.1 标签分类总览（6大类）</h3>
+            <div class="highlight-box">
+                <p style="margin-bottom: 12px;"><strong>专家标签体系</strong></p>
+                <p style="margin: 0;">
+                    <span class="tag-category tag-identity">1. 身份认证类 (identity)</span>
+                    <span class="tag-category tag-qualification">2. 能力资质类 (qualification)</span>
+                    <span class="tag-category tag-behavior">3. 行为表现类 (behavior)</span>
+                    <span class="tag-category tag-experience">4. 项目经验类 (experience)</span>
+                    <span class="tag-category tag-source">5. 来源渠道类 (source)</span>
+                    <span class="tag-category tag-operation">6. 运营管理类 (operation)</span>
+                </p>
+            </div>
+
+            <h3>3.2 标签详细定义</h3>
+            
+            <h4>3.2.1 身份认证类 (identity)</h4>
+            <table>
+                <thead>
+                    <tr><th>标签组</th><th>标签值</th><th>说明</th><th>授予条件</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>实名认证</td><td><code>已实名</code></td><td>完成三要素认证</td><td>实名认证通过</td></tr>
+                    <tr><td>学历认证</td><td><code>高中及以下</code> <code>大专</code> <code>本科</code> <code>硕士</code> <code>博士</code> <code>博士后</code></td><td>最高学历</td><td>资料审核通过</td></tr>
+                    <tr><td>学校类型</td><td><code>985</code> <code>211</code> <code>双一流</code> <code>海外QS100</code> <code>海外名校</code></td><td>院校等级</td><td>教育经历审核</td></tr>
+                    <tr><td>资质认证</td><td><code>CPA</code> <code>CFA</code> <code>医师资格</code> <code>律师资格</code> 等</td><td>专业资质</td><td>证明材料审核</td></tr>
+                </tbody>
+            </table>
+
+            <h4>3.2.2 能力资质类 (qualification)</h4>
+            <table>
+                <thead>
+                    <tr><th>标签组</th><th>标签值</th><th>说明</th><th>授予条件</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>主领域</td><td><code>经济金融</code> <code>医疗健康</code> <code>法律</code> <code>代码</code> 等</td><td>一级领域</td><td>资料填写+审核</td></tr>
+                    <tr><td>子领域</td><td><code>投资</code> <code>临床医学</code> <code>民法</code> <code>Python</code> 等</td><td>二/三级领域</td><td>资料填写+审核</td></tr>
+                    <tr><td>语言能力</td><td><code>英语</code> <code>日语</code> <code>法语</code> <code>德语</code> 等</td><td>外语技能</td><td>资料审核/考试</td></tr>
+                    <tr><td>平台认证</td><td><code>初级标注师</code> <code>中级标注师</code> <code>高级标注师</code></td><td>平台考核等级</td><td>准入考试通过</td></tr>
+                    <tr><td>项目认证</td><td><code>[项目名]认证</code></td><td>项目专项认证</td><td>项目考试通过</td></tr>
+                </tbody>
+            </table>
+
+            <h4>3.2.3 行为表现类 (behavior)</h4>
+            <table>
+                <thead>
+                    <tr><th>标签组</th><th>标签值</th><th>说明</th><th>授予条件</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>活跃度</td><td><code>高活跃</code> <code>中活跃</code> <code>低活跃</code> <code>沉默用户</code></td><td>近期活跃情况</td><td>系统自动计算</td></tr>
+                    <tr><td>质量评级</td><td><code>S级</code> <code>A级</code> <code>B级</code> <code>C级</code> <code>D级</code></td><td>标注质量等级</td><td>质检数据统计</td></tr>
+                    <tr><td>效率评级</td><td><code>高效</code> <code>正常</code> <code>偏慢</code></td><td>工作效率等级</td><td>任务耗时统计</td></tr>
+                    <tr><td>信用等级</td><td><code>优秀</code> <code>良好</code> <code>一般</code> <code>较差</code></td><td>综合信用</td><td>多维度计算</td></tr>
+                </tbody>
+            </table>
+
+            <h4>3.2.4 项目经验类 (experience)</h4>
+            <table>
+                <thead>
+                    <tr><th>标签组</th><th>标签值</th><th>说明</th><th>授予条件</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>参与项目</td><td><code>[项目名]参与者</code></td><td>项目参与记录</td><td>加入项目</td></tr>
+                    <tr><td>项目角色</td><td><code>标注员</code> <code>质检员</code> <code>审核员</code> <code>小组长</code></td><td>担任角色</td><td>分配角色</td></tr>
+                    <tr><td>任务类型</td><td><code>对话标注</code> <code>图像标注</code> <code>代码标注</code> 等</td><td>经验任务类型</td><td>完成任务</td></tr>
+                    <tr><td>产出等级</td><td><code>百题</code> <code>千题</code> <code>万题</code> <code>十万题</code></td><td>累计产出量</td><td>任务完成统计</td></tr>
+                </tbody>
+            </table>
+
+            <h4>3.2.5 来源渠道类 (source)</h4>
+            <table>
+                <thead>
+                    <tr><th>标签组</th><th>标签值</th><th>说明</th><th>授予条件</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>注册渠道</td><td><code>官网</code> <code>微信</code> <code>APP</code> <code>H5</code></td><td>注册来源</td><td>注册时记录</td></tr>
+                    <tr><td>推广渠道</td><td><code>校园大使</code> <code>供应商</code> <code>自然流量</code> <code>广告投放</code></td><td>推广来源</td><td>注册时记录</td></tr>
+                    <tr><td>邀请来源</td><td><code>专家邀请</code> <code>管理员邀请</code> <code>无邀请</code></td><td>被邀请方式</td><td>邀请关系记录</td></tr>
+                    <tr><td>岗位入口</td><td><code>[岗位名]入口</code></td><td>通过哪个岗位进入</td><td>岗位申请通过</td></tr>
+                </tbody>
+            </table>
+
+            <h4>3.2.6 运营管理类 (operation)</h4>
+            <table>
+                <thead>
+                    <tr><th>标签组</th><th>标签值</th><th>说明</th><th>授予条件</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>VIP等级</td><td><code>普通</code> <code>银牌</code> <code>金牌</code> <code>钻石</code></td><td>会员等级</td><td>积分/贡献计算</td></tr>
+                    <tr><td>特殊标记</td><td><code>重点关注</code> <code>潜力专家</code> <code>核心骨干</code> <code>优先分配</code></td><td>运营标记</td><td>管理员手动</td></tr>
+                    <tr><td>风险标记</td><td><code>疑似作弊</code> <code>多次返工</code> <code>投诉记录</code> <code>数据异常</code></td><td>风控标记</td><td>系统/人工判定</td></tr>
+                    <tr><td>临时权限</td><td><code>临时质检</code> <code>临时审核</code> <code>临时小组长</code></td><td>临时授权</td><td>管理员授予</td></tr>
+                    <tr><td>内部标记</td><td><code>内部员工</code> <code>测试账号</code> <code>合作伙伴</code></td><td>内部人员</td><td>管理员标记</td></tr>
+                </tbody>
+            </table>
+
+            <h3>3.3 标签授予节点</h3>
+            <div class="flow-diagram">
+                <div class="flow-step">
+                    <div class="step-name">注册</div>
+                    <div class="step-tags">来源标签</div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-name">填写资料</div>
+                    <div class="step-tags">学历/领域/资质</div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-name">实名认证</div>
+                    <div class="step-tags">实名标签</div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-name">准入考试</div>
+                    <div class="step-tags">平台认证</div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-name">岗位申请</div>
+                    <div class="step-tags">岗位入口+职级</div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-name">项目参与</div>
+                    <div class="step-tags">项目经验</div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-name">任务执行</div>
+                    <div class="step-tags">行为表现</div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-name">持续运营</div>
+                    <div class="step-tags">运营标签</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 四、岗位与职级/标签的关系 -->
+        <section id="section4">
+            <h2>四、岗位与职级/标签的关系</h2>
+            
+            <h3>4.1 岗位发布时的配置</h3>
+            <p>岗位发布时需要记录三个关键信息：</p>
+            
+            <div class="highlight-box warning">
+                <h4 style="margin: 0 0 12px 0; color: #92400e;">① 需求来源项目（推广奖励关联）</h4>
+                <ul style="margin-bottom: 0;">
+                    <li><strong>关联项目</strong>：[金融研报分析项目]</li>
+                    <li><strong>奖励条件</strong>：必须在此项目完成2道题才发放推广奖金</li>
+                    <li><strong>目的</strong>：避免高奖金拉人却做便宜题的套利行为</li>
+                </ul>
+            </div>
+            
+            <div class="highlight-box success">
+                <h4 style="margin: 0 0 12px 0; color: #166534;">② 审核通过授予的职级（可多个领域）</h4>
+                <ul>
+                    <li>规则1：经济金融/投资 领域 → 简历匹配度 ≥ 80% 授予 L2，≥ 60% 授予 L1</li>
+                    <li>规则2：代码/Python 领域 → 有相关经验授予 L1</li>
+                </ul>
+                <p style="margin-bottom: 0;"><strong>示例</strong>：小明通过审核后获得 <code>经济金融/投资 - L2</code> + <code>代码/Python - L1</code></p>
+            </div>
+            
+            <div class="highlight-box">
+                <h4 style="margin: 0 0 12px 0; color: #1e40af;">③ 审核通过授予的标签</h4>
+                <ul style="margin-bottom: 0;">
+                    <li><code>[金融标注岗]入口</code> (source/岗位入口)</li>
+                    <li><code>金融项目准入资格</code> (qualification/项目认证)</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- 五、项目准入配置 -->
+        <section id="section5">
+            <h2>五、项目准入配置</h2>
+            
+            <h3>5.1 项目环节与准入要求</h3>
+            <table>
+                <thead>
+                    <tr><th>环节</th><th>职级要求</th><th>标签要求</th><th>组合逻辑</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>标注 (labeling)</strong></td>
+                        <td>L1 及以上</td>
+                        <td>must: 已实名<br>must_not: 疑似作弊</td>
+                        <td>AND</td>
+                    </tr>
+                    <tr>
+                        <td><strong>质检1 (qa1)</strong></td>
+                        <td>L2 及以上</td>
+                        <td>must: 质检员<br>should: S级/A级</td>
+                        <td>AND</td>
+                    </tr>
+                    <tr>
+                        <td><strong>质检2 (qa2)</strong></td>
+                        <td>L3 及以上</td>
+                        <td>should: 核心骨干</td>
+                        <td>OR</td>
+                    </tr>
+                    <tr>
+                        <td><strong>终审 (final)</strong></td>
+                        <td>专家委员会</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>5.2 准入判断逻辑</h3>
+            <div class="diagram">项目准入判断逻辑
+═══════════════════════════════════════════════════════════════════════════
+
+  专家申请进入项目某环节
+           │
+           ▼
+  ┌─────────────────────────────────────┐
+  │     检查职级要求（主轨）              │
+  │     该专家在对应领域的职级 ≥ 要求?    │
+  └───────────────┬─────────────────────┘
+                  │
+         ┌───────┴───────┐
+         │               │
+    满足 ▼          不满足 ▼
+         │               │
+         │    ┌─────────────────────┐
+         │    │ 组合逻辑 = OR ?      │
+         │    └─────────┬───────────┘
+         │              │
+         │      ┌───────┴───────┐
+         │      │               │
+         │   是 ▼            否 ▼
+         │      │               │
+         │      │          拒绝准入
+         │      ▼               
+  ┌──────┴──────────────────────┐
+  │     检查标签要求（辅轨）       │
+  │  must: 必须全部满足          │
+  │  should: 优先级加分          │
+  │  must_not: 不能有任何一个    │
+  └─────────────┬───────────────┘
+                │
+       ┌────────┴────────┐
+       │                 │
+   满足 ▼            不满足 ▼
+       │                 │
+   允许准入    组合逻辑=AND? → 是 → 拒绝
+                         │
+                        否 → 允许准入</div>
+        </section>
+
+        <!-- 六、职级成长体系 -->
+        <section id="section6">
+            <h2>六、职级成长体系</h2>
+            
+            <h3>6.1 成长要素</h3>
+            <div class="growth-factors">
+                <div class="growth-factor">
+                    <div class="icon">📊</div>
+                    <div class="name">做题量</div>
+                    <div class="weight">权重 30%</div>
+                </div>
+                <div class="growth-factor">
+                    <div class="icon">✅</div>
+                    <div class="name">通过率</div>
+                    <div class="weight">权重 35%</div>
+                </div>
+                <div class="growth-factor">
+                    <div class="icon">⚠️</div>
+                    <div class="name">Issue数</div>
+                    <div class="weight">权重 20%</div>
+                </div>
+                <div class="growth-factor">
+                    <div class="icon">🚫</div>
+                    <div class="name">违规记录</div>
+                    <div class="weight">权重 15%</div>
+                </div>
+            </div>
+            
+            <div class="highlight-box">
+                <p style="text-align: center; margin: 0;">
+                    <strong>AI 评估</strong> → 综合得分计算 → 晋升/降级建议 → <strong>人工审核</strong>（L3及以上）
+                </p>
+            </div>
+
+            <h3>6.2 晋升规则</h3>
+            <table>
+                <thead>
+                    <tr><th>晋升路径</th><th>必须条件</th><th>执行方式</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>L1 → L2</strong></td>
+                        <td>累计 500+ 题目、通过率 ≥ 90%、近30天无严重Issue、无违规</td>
+                        <td>自动执行</td>
+                    </tr>
+                    <tr>
+                        <td><strong>L2 → L3</strong></td>
+                        <td>累计 2000+ 题目、通过率 ≥ 95%、质检准确率 ≥ 92%、近90天无Issue</td>
+                        <td>人工确认</td>
+                    </tr>
+                    <tr>
+                        <td><strong>L3 → 专委会</strong></td>
+                        <td>L3满6个月、有突出贡献、愿意参与治理</td>
+                        <td>邀请 + 投票</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>6.3 降级与处罚</h3>
+            <table>
+                <thead>
+                    <tr><th>触发条件</th><th>处理方式</th><th>同步更新标签</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>连续30天通过率低于 70%</td><td>降一级</td><td>质量评级降级</td></tr>
+                    <tr><td>月度 Issue 数超过 10 个</td><td>降一级</td><td>添加"多次返工"</td></tr>
+                    <tr><td>90天内无做题记录</td><td>冻结职级</td><td>活跃度更新为"沉默用户"</td></tr>
+                    <tr><td>发现作弊行为</td><td>降至L1或移除</td><td>添加"疑似作弊"</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- 七、荣誉墙与激励 -->
+        <section id="section7">
+            <h2>七、荣誉墙与激励</h2>
+            
+            <h3>7.1 专家工作台荣誉展示</h3>
+            <div class="honor-wall-preview">
+                <h4>专家工作台 - 荣誉墙</h4>
+                
+                <div class="honor-section">
+                    <h5>我的职级</h5>
+                    <div class="my-levels">
+                        <div class="my-level-item">
+                            <span class="icon">🏆</span>
+                            <div class="info">
+                                <div class="domain">经济金融/投资</div>
+                                <div class="level">L3 - 大师</div>
+                            </div>
+                        </div>
+                        <div class="my-level-item">
+                            <span class="icon">⭐</span>
+                            <div class="info">
+                                <div class="domain">代码/Python</div>
+                                <div class="level">L2 - 精英</div>
+                            </div>
+                        </div>
+                        <div class="my-level-item">
+                            <span class="icon">🌱</span>
+                            <div class="info">
+                                <div class="domain">医疗健康</div>
+                                <div class="level">L1 - 新锐</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="honor-section">
+                    <h5>我的标签</h5>
+                    <div class="my-tags">
+                        <span class="my-tag">已实名</span>
+                        <span class="my-tag">硕士</span>
+                        <span class="my-tag">985</span>
+                        <span class="my-tag">CFA</span>
+                        <span class="my-tag">高活跃</span>
+                        <span class="my-tag">S级质量</span>
+                        <span class="my-tag">万题达人</span>
+                        <span class="my-tag">金融项目准入资格</span>
+                        <span class="my-tag">质检员</span>
+                        <span class="my-tag">核心骨干</span>
+                    </div>
+                </div>
+                
+                <div class="honor-section">
+                    <h5>成就徽章</h5>
+                    <div class="achievements">
+                        <div class="achievement-badge"><span class="icon">🎯</span><span class="name">万题达人</span></div>
+                        <div class="achievement-badge"><span class="icon">📈</span><span class="name">连续优秀</span></div>
+                        <div class="achievement-badge"><span class="icon">🔍</span><span class="name">问题猎人</span></div>
+                        <div class="achievement-badge"><span class="icon">⚡</span><span class="name">效率之星</span></div>
+                        <div class="achievement-badge"><span class="icon">🌟</span><span class="name">质检达人</span></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 八、系统运转机制 -->
+        <section id="section8">
+            <h2>八、系统运转机制</h2>
+            
+            <h3>8.1 AI + 人工协同</h3>
+            <table>
+                <thead>
+                    <tr><th>操作</th><th>执行方式</th><th>说明</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>L1→L2 晋升</td><td>自动执行</td><td>系统每周扫描，符合条件自动晋升</td></tr>
+                    <tr><td>L2→L3 晋升</td><td>人工确认</td><td>AI生成报告，管理员审核</td></tr>
+                    <tr><td>L3→专委会</td><td>委员会投票</td><td>平台邀请，委员会过半数通过</td></tr>
+                    <tr><td>降级</td><td>人工确认</td><td>AI预警，管理员确认执行</td></tr>
+                    <tr><td>标签更新（大部分）</td><td>自动执行</td><td>节点触发自动授予</td></tr>
+                    <tr><td>风险标签</td><td>人工确认</td><td>系统检测，人工确认添加</td></tr>
+                </tbody>
+            </table>
+
+            <h3>8.2 定时任务</h3>
+            <table>
+                <thead>
+                    <tr><th>任务</th><th>频率</th><th>执行内容</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>每日检查</td><td>每天凌晨2点</td><td>更新活跃度/质量评级标签，检查降级条件</td></tr>
+                    <tr><td>每周晋升</td><td>每周一凌晨3点</td><td>扫描L1→L2晋升，更新产出等级标签</td></tr>
+                    <tr><td>每月评审</td><td>每月1日凌晨4点</td><td>扫描L2→L3晋升，更新VIP等级标签</td></tr>
+                    <tr><td>实时检查</td><td>Issue创建时</td><td>检查即时降级，添加风险标签</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- 九、实施计划 -->
+        <section id="section9">
+            <h2>九、实施计划</h2>
+            
+            <table>
+                <thead>
+                    <tr><th>阶段</th><th>内容</th><th>优先级</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>P0-职级基础</td><td>职级数据表创建、基础CRUD</td><td><span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:4px;">P0</span></td></tr>
+                    <tr><td>P0-标签基础</td><td>标签数据表创建（复用+扩展）、基础CRUD</td><td><span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:4px;">P0</span></td></tr>
+                    <tr><td>P0-岗位配置</td><td>岗位职级配置、岗位标签配置、审核授予</td><td><span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:4px;">P0</span></td></tr>
+                    <tr><td>P0-项目准入</td><td>项目准入配置、职级+标签校验</td><td><span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:4px;">P0</span></td></tr>
+                    <tr><td>P1-标签自动化</td><td>全流程节点标签自动授予</td><td><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:4px;">P1</span></td></tr>
+                    <tr><td>P1-职级成长</td><td>职级成长评估、AI评估引擎</td><td><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:4px;">P1</span></td></tr>
+                    <tr><td>P1-推广优化</td><td>推广奖励优化、项目关联</td><td><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:4px;">P1</span></td></tr>
+                    <tr><td>P2-荣誉系统</td><td>荣誉墙、成就系统</td><td><span style="background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:4px;">P2</span></td></tr>
+                    <tr><td>P2-运营看板</td><td>标签统计分析、职级分布分析</td><td><span style="background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:4px;">P2</span></td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- 十、总结 -->
+        <section id="section10">
+            <h2>十、总结</h2>
+            
+            <h3>10.1 双轨制优势</h3>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <div class="icon">📈</div>
+                    <div class="title">清晰成长路径</div>
+                    <div class="desc">L1→L2→L3→专委会</div>
+                </div>
+                <div class="summary-item">
+                    <div class="icon">🎨</div>
+                    <div class="title">完整专家画像</div>
+                    <div class="desc">6大类标签全覆盖</div>
+                </div>
+                <div class="summary-item">
+                    <div class="icon">🎯</div>
+                    <div class="title">精准能力匹配</div>
+                    <div class="desc">金融L2+已实名+S级</div>
+                </div>
+                <div class="summary-item">
+                    <div class="icon">🔧</div>
+                    <div class="title">灵活特例处理</div>
+                    <div class="desc">标签处理corner case</div>
+                </div>
+                <div class="summary-item">
+                    <div class="icon">💰</div>
+                    <div class="title">可控推广成本</div>
+                    <div class="desc">岗位关联项目</div>
+                </div>
+                <div class="summary-item">
+                    <div class="icon">🤖</div>
+                    <div class="title">AI Native</div>
+                    <div class="desc">自然语言规则+AI评估</div>
+                </div>
+                <div class="summary-item">
+                    <div class="icon">🏆</div>
+                    <div class="title">激励驱动</div>
+                    <div class="desc">荣誉墙+成就系统</div>
+                </div>
+                <div class="summary-item">
+                    <div class="icon">📋</div>
+                    <div class="title">完整可追溯</div>
+                    <div class="desc">变更日志+授予记录</div>
+                </div>
+            </div>
+
+            <h3>10.2 核心设计要点</h3>
+            <div class="key-points">
+                <h4>8 个关键设计原则</h4>
+                <ol>
+                    <li><strong>职级 = 领域 × 等级</strong>：每个专家可以有多个领域的职级</li>
+                    <li><strong>标签 = 6大类全覆盖</strong>：身份/能力/行为/经验/来源/运营</li>
+                    <li><strong>先验 vs 后验</strong>：L1/L2可先验授予，L3/专委会必须后验</li>
+                    <li><strong>岗位三绑定</strong>：绑定需求项目 + 绑定授予职级 + 绑定授予标签</li>
+                    <li><strong>项目按职级+标签准入</strong>：AND/OR 灵活组合</li>
+                    <li><strong>全流程自动授予</strong>：标签在注册/审核/考试/任务等节点自动授予</li>
+                    <li><strong>成长靠数据说话</strong>：做题量、通过率、Issue、违规</li>
+                    <li><strong>AI + 人工</strong>：低级自动，高级人工</li>
+                </ol>
+            </div>
+        </section>
+    </div>
+
+    <footer class="footer">
+        <p>文档版本：v2.0 | 基于：职级体系 + 完整标签体系 融合设计 | 日期：2026-01-23</p>
+    </footer>
+</body>
+</html>
