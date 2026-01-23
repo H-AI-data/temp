@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>专家标签体系设计文档</title>
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-light: #818cf8;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-color: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --code-bg: #f1f5f9;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --info-color: #3b82f6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.7;
+            padding: 0;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #7c3aed 100%);
+            color: white;
+            padding: 60px 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            position: relative;
+        }
+
+        .header .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            position: relative;
+        }
+
+        .header .meta {
+            margin-top: 20px;
+            font-size: 0.9rem;
+            opacity: 0.8;
+            position: relative;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .toc {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .toc h2 {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+        }
+
+        .toc ul {
+            list-style: none;
+            columns: 2;
+            column-gap: 40px;
+        }
+
+        .toc li {
+            margin-bottom: 10px;
+        }
+
+        .toc a {
+            color: var(--text-color);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .toc a:hover {
+            color: var(--primary-color);
+        }
+
+        section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            color: var(--primary-color);
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        h3 {
+            font-size: 1.3rem;
+            color: var(--text-color);
+            margin: 30px 0 16px 0;
+        }
+
+        h4 {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            margin: 24px 0 12px 0;
+        }
+
+        p {
+            margin-bottom: 16px;
+        }
+
+        ul, ol {
+            margin-bottom: 16px;
+            padding-left: 24px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 0.95rem;
+        }
+
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border: 1px solid var(--border-color);
+        }
+
+        th {
+            background: var(--code-bg);
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        tr:hover {
+            background: var(--bg-color);
+        }
+
+        code {
+            background: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.9em;
+            color: #e11d48;
+        }
+
+        pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+
+        pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+        }
+
+        .diagram {
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.8rem;
+            line-height: 1.4;
+            white-space: pre;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%);
+            border-left: 4px solid var(--primary-color);
+            padding: 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 20px 0;
+        }
+
+        .highlight-box.warning {
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+            border-left-color: var(--warning-color);
+        }
+
+        .highlight-box.success {
+            background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+            border-left-color: var(--success-color);
+        }
+
+        .tag-category {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin: 2px;
+        }
+
+        .tag-identity { background: #dbeafe; color: #1e40af; }
+        .tag-qualification { background: #dcfce7; color: #166534; }
+        .tag-behavior { background: #fef3c7; color: #92400e; }
+        .tag-experience { background: #f3e8ff; color: #7c3aed; }
+        .tag-source { background: #fce7f3; color: #be185d; }
+        .tag-operation { background: #fee2e2; color: #991b1b; }
+
+        .flow-diagram {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin: 30px 0;
+        }
+
+        .flow-step {
+            background: white;
+            border: 2px solid var(--primary-color);
+            border-radius: 8px;
+            padding: 15px 20px;
+            text-align: center;
+            min-width: 100px;
+            position: relative;
+        }
+
+        .flow-step::after {
+            content: '→';
+            position: absolute;
+            right: -20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--primary-color);
+            font-size: 1.2rem;
+        }
+
+        .flow-step:last-child::after {
+            display: none;
+        }
+
+        .flow-step .step-name {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+        }
+
+        .flow-step .step-tags {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .entity-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .entity-card {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid var(--border-color);
+        }
+
+        .entity-card h4 {
+            color: var(--primary-color);
+            margin: 0 0 8px 0;
+            font-size: 1.2rem;
+        }
+
+        .entity-card .position {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 16px;
+        }
+
+        .entity-card ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .summary-table {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+        }
+
+        .summary-table h3 {
+            margin-top: 0;
+            color: var(--primary-color);
+        }
+
+        .benefit-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .benefit-item {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            border: 1px solid var(--border-color);
+        }
+
+        .benefit-item .icon {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+        }
+
+        .benefit-item .title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .benefit-item .desc {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .toc ul {
+                columns: 1;
+            }
+            
+            .entity-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            section {
+                padding: 24px;
+            }
+            
+            pre {
+                font-size: 0.75rem;
+            }
+        }
+
+        @media print {
+            .header {
+                background: var(--primary-color);
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            section {
+                break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>专家标签体系设计文档</h1>
+        <p class="subtitle">核心理念：<strong>专家在平台上的全流程都是在不断给专家身上打标签</strong></p>
+        <p class="meta">设计时间：2026-01-23 | 版本：v1.0</p>
+    </header>
+
+    <div class="container">
+        <!-- 目录 -->
+        <nav class="toc">
+            <h2>目录</h2>
+            <ul>
+                <li><a href="#section1">一、设计背景</a></li>
+                <li><a href="#section2">二、核心概念定义</a></li>
+                <li><a href="#section3">三、标签分类体系</a></li>
+                <li><a href="#section4">四、标签授予节点</a></li>
+                <li><a href="#section5">五、岗位与标签的关系</a></li>
+                <li><a href="#section6">六、项目与标签的关系</a></li>
+                <li><a href="#section7">七、数据库设计</a></li>
+                <li><a href="#section8">八、推广奖励机制</a></li>
+                <li><a href="#section9">九、实施建议</a></li>
+                <li><a href="#section10">十、总结</a></li>
+            </ul>
+        </nav>
+
+        <!-- 一、设计背景 -->
+        <section id="section1">
+            <h2>一、设计背景</h2>
+            
+            <h3>1.1 现状分析</h3>
+            <p>当前系统中存在以下实体关系：</p>
+            <ul>
+                <li><strong>岗位(Job)</strong>：对外招聘入口，有推广奖励机制</li>
+                <li><strong>项目(Project)</strong>：通过 <code>tbl_project_jobs</code> 与岗位关联</li>
+                <li><strong>专家(User)</strong>：有 <code>tags</code> 字段存储标签ID</li>
+                <li><strong>领域(Industry)</strong>：通过 <code>tbl_expert_industries</code> 存储专家擅长领域</li>
+            </ul>
+
+            <h3>1.2 核心问题</h3>
+            <table>
+                <thead>
+                    <tr><th>问题</th><th>描述</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>耦合过紧</td><td>项目必须关联岗位，灵活性不足</td></tr>
+                    <tr><td>标签利用率低</td><td>现有标签系统未充分利用，无法支撑精准筛选</td></tr>
+                    <tr><td>标签来源单一</td><td>标签主要靠手动添加，缺乏自动化机制</td></tr>
+                    <tr><td>缺乏分类体系</td><td>标签没有结构化分类，难以管理和筛选</td></tr>
+                </tbody>
+            </table>
+
+            <h3>1.3 设计目标</h3>
+            <div class="highlight-box success">
+                <ol>
+                    <li><strong>解耦</strong>：项目可以直接按标签筛选专家，不强依赖岗位</li>
+                    <li><strong>自动化</strong>：在关键节点自动为专家授予标签</li>
+                    <li><strong>结构化</strong>：建立清晰的标签分类体系</li>
+                    <li><strong>可追溯</strong>：记录标签的授予来源和时间</li>
+                </ol>
+            </div>
+        </section>
+
+        <!-- 二、核心概念定义 -->
+        <section id="section2">
+            <h2>二、核心概念定义</h2>
+            
+            <h3>2.1 四大实体的职责重新定义</h3>
+            <div class="entity-grid">
+                <div class="entity-card">
+                    <h4>【岗位 Job】</h4>
+                    <p class="position">定位：招聘入口</p>
+                    <ul>
+                        <li>对外展示招聘信息</li>
+                        <li>配置招聘条件标签</li>
+                        <li>设置推广奖励</li>
+                        <li>审核通过授予标签</li>
+                    </ul>
+                </div>
+                <div class="entity-card">
+                    <h4>【项目 Project】</h4>
+                    <p class="position">定位：工作载体</p>
+                    <ul>
+                        <li>承载具体标注任务</li>
+                        <li>按标签筛选专家</li>
+                        <li>配置工作流程</li>
+                        <li>与岗位可选关联</li>
+                    </ul>
+                </div>
+                <div class="entity-card">
+                    <h4>【标签 Tag】</h4>
+                    <p class="position">定位：能力画像</p>
+                    <ul>
+                        <li>描述专家特征</li>
+                        <li>支撑精准匹配</li>
+                        <li>分类分层管理</li>
+                    </ul>
+                </div>
+                <div class="entity-card">
+                    <h4>【专家 Expert】</h4>
+                    <p class="position">定位：劳动力</p>
+                    <ul>
+                        <li>完成标注任务</li>
+                        <li>积累能力标签</li>
+                        <li>获取收入</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>2.2 四大实体关系矩阵</h3>
+            <table>
+                <thead>
+                    <tr><th>关系</th><th>类型</th><th>说明</th><th>是否必须</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>岗位 → 标签</td><td>配置关系</td><td>岗位配置准入标签要求 + 审核通过授予标签</td><td>可选</td></tr>
+                    <tr><td>项目 → 标签</td><td>筛选关系</td><td>项目按标签组合筛选专家</td><td>推荐</td></tr>
+                    <tr><td>项目 → 岗位</td><td>关联关系</td><td>项目可关联岗位用于推广引流</td><td><strong>可选</strong></td></tr>
+                    <tr><td>专家 → 标签</td><td>拥有关系</td><td>专家在全流程中积累标签</td><td>核心</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- 三、标签分类体系 -->
+        <section id="section3">
+            <h2>三、标签分类体系</h2>
+            
+            <h3>3.1 标签分类总览</h3>
+            <div class="highlight-box">
+                <p><strong>专家标签体系（6大类）</strong></p>
+                <p>
+                    <span class="tag-category tag-identity">1. 身份认证类 (identity)</span>
+                    <span class="tag-category tag-qualification">2. 能力资质类 (qualification)</span>
+                    <span class="tag-category tag-behavior">3. 行为表现类 (behavior)</span>
+                    <span class="tag-category tag-experience">4. 项目经验类 (experience)</span>
+                    <span class="tag-category tag-source">5. 来源渠道类 (source)</span>
+                    <span class="tag-category tag-operation">6. 运营管理类 (operation)</span>
+                </p>
+            </div>
+
+            <h3>3.2 标签详细定义</h3>
+            
+            <h4>3.2.1 身份认证类 (identity)</h4>
+            <table>
+                <thead>
+                    <tr><th>标签组</th><th>标签值</th><th>说明</th><th>授予条件</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>实名认证</td><td><code>已实名</code></td><td>完成三要素认证</td><td>实名认证通过</td></tr>
+                    <tr><td>学历认证</td><td><code>本科</code> <code>硕士</code> <code>博士</code> <code>博士后</code></td><td>最高学历</td><td>资料审核通过</td></tr>
+                    <tr><td>学校类型</td><td><code>985</code> <code>211</code> <code>双一流</code> <code>海外名校</code></td><td>院校等级</td><td>教育经历审核</td></tr>
+                    <tr><td>资质认证</td><td><code>CPA</code> <code>CFA</code> <code>医师资格</code> <code>律师资格</code></td><td>专业资质</td><td>证明材料审核</td></tr>
+                </tbody>
+            </table>
+
+            <h4>3.2.2 能力资质类 (qualification)</h4>
+            <table>
+                <thead>
+                    <tr><th>标签组</th><th>标签值</th><th>说明</th><th>授予条件</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>主领域</td><td><code>经济金融</code> <code>医疗健康</code> <code>法律</code> <code>代码</code> ...</td><td>一级领域</td><td>资料填写+审核</td></tr>
+                    <tr><td>子领域</td><td><code>投资</code> <code>临床医学</code> <code>民法</code> <code>Python</code> ...</td><td>二/三级领域</td><td>资料填写+审核</td></tr>
+                    <tr><td>语言能力</td><td><code>英语</code> <code>日语</code> <code>法语</code> <code>德语</code> ...</td><td>外语技能</td><td>资料审核/考试</td></tr>
+                    <tr><td>平台认证</td><td><code>初级标注师</code> <code>中级标注师</code> <code>高级标注师</code></td><td>平台考核等级</td><td>准入考试通过</td></tr>
+                    <tr><td>项目认证</td><td><code>项目A认证</code> <code>项目B认证</code></td><td>项目专项认证</td><td>项目考试通过</td></tr>
+                </tbody>
+            </table>
+
+            <h4>3.2.3 行为表现类 (behavior)</h4>
+            <table>
+                <thead>
+                    <tr><th>标签组</th><th>标签值</th><th>说明</th><th>授予条件</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>活跃度</td><td><code>高活跃</code> <code>中活跃</code> <code>低活跃</code> <code>沉默</code></td><td>近期活跃情况</td><td>系统自动计算</td></tr>
+                    <tr><td>质量评级</td><td><code>S级</code> <code>A级</code> <code>B级</code> <code>C级</code></td><td>标注质量等级</td><td>质检数据统计</td></tr>
+                    <tr><td>效率评级</td><td><code>高效</code> <code>正常</code> <code>偏慢</code></td><td>工作效率等级</td><td>任务耗时统计</td></tr>
+                    <tr><td>信用等级</td><td><code>优秀</code> <code>良好</code> <code>一般</code> <code>较差</code></td><td>综合信用</td><td>多维度计算</td></tr>
+                </tbody>
+            </table>
+
+            <h4>3.2.4 项目经验类 (experience)</h4>
+            <table>
+                <thead>
+                    <tr><th>标签组</th><th>标签值</th><th>说明</th><th>授予条件</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>参与项目</td><td><code>[项目名]参与者</code></td><td>项目参与记录</td><td>加入项目</td></tr>
+                    <tr><td>项目角色</td><td><code>标注员</code> <code>质检员</code> <code>审核员</code></td><td>担任角色</td><td>分配角色</td></tr>
+                    <tr><td>任务类型</td><td><code>对话标注</code> <code>图像标注</code> <code>代码标注</code> ...</td><td>经验任务类型</td><td>完成任务</td></tr>
+                    <tr><td>产出等级</td><td><code>千题</code> <code>万题</code> <code>十万题</code></td><td>累计产出量</td><td>任务完成统计</td></tr>
+                </tbody>
+            </table>
+
+            <h4>3.2.5 来源渠道类 (source)</h4>
+            <table>
+                <thead>
+                    <tr><th>标签组</th><th>标签值</th><th>说明</th><th>授予条件</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>注册渠道</td><td><code>官网</code> <code>微信</code> <code>APP</code> <code>H5</code></td><td>注册来源</td><td>注册时记录</td></tr>
+                    <tr><td>推广渠道</td><td><code>校园大使</code> <code>供应商</code> <code>自然流量</code></td><td>推广来源</td><td>注册时记录</td></tr>
+                    <tr><td>邀请来源</td><td><code>专家邀请</code> <code>管理员邀请</code></td><td>被邀请方式</td><td>邀请关系记录</td></tr>
+                    <tr><td>岗位入口</td><td><code>[岗位名]入口</code></td><td>通过哪个岗位进入</td><td>岗位申请通过</td></tr>
+                </tbody>
+            </table>
+
+            <h4>3.2.6 运营管理类 (operation)</h4>
+            <table>
+                <thead>
+                    <tr><th>标签组</th><th>标签值</th><th>说明</th><th>授予条件</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>VIP等级</td><td><code>普通</code> <code>银牌</code> <code>金牌</code> <code>钻石</code></td><td>会员等级</td><td>积分/贡献计算</td></tr>
+                    <tr><td>特殊标记</td><td><code>重点关注</code> <code>潜力专家</code> <code>核心骨干</code></td><td>运营标记</td><td>管理员手动</td></tr>
+                    <tr><td>风险标记</td><td><code>疑似作弊</code> <code>多次返工</code> <code>投诉记录</code></td><td>风控标记</td><td>系统/人工判定</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- 四、标签授予节点 -->
+        <section id="section4">
+            <h2>四、标签授予节点</h2>
+            
+            <h3>4.1 专家全流程标签授予图</h3>
+            <div class="flow-diagram">
+                <div class="flow-step">
+                    <div class="step-name">注册</div>
+                    <div class="step-tags">来源标签</div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-name">填写资料</div>
+                    <div class="step-tags">学历/领域</div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-name">实名认证</div>
+                    <div class="step-tags">实名标签</div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-name">准入考试</div>
+                    <div class="step-tags">平台认证</div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-name">岗位申请</div>
+                    <div class="step-tags">岗位入口</div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-name">项目参与</div>
+                    <div class="step-tags">项目经验</div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-name">任务执行</div>
+                    <div class="step-tags">行为表现</div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-name">持续运营</div>
+                    <div class="step-tags">运营标签</div>
+                </div>
+            </div>
+
+            <h3>4.2 各节点详细授予规则</h3>
+            
+            <h4>节点1：注册</h4>
+            <table>
+                <thead>
+                    <tr><th>触发条件</th><th>授予标签</th><th>标签分类</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>用户完成注册</td><td>注册渠道标签（官网/微信/APP）</td><td>source</td></tr>
+                    <tr><td>有邀请人</td><td>邀请来源标签</td><td>source</td></tr>
+                    <tr><td>有邀请岗位</td><td>岗位入口标签（待审核）</td><td>source</td></tr>
+                    <tr><td>有推广码</td><td>推广渠道标签</td><td>source</td></tr>
+                </tbody>
+            </table>
+
+            <h4>节点2：资料填写与审核</h4>
+            <table>
+                <thead>
+                    <tr><th>触发条件</th><th>授予标签</th><th>标签分类</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>填写学历 + 审核通过</td><td>学历标签（本科/硕士/博士）</td><td>identity</td></tr>
+                    <tr><td>教育经历 + 审核通过</td><td>学校类型标签（985/211/双一流）</td><td>identity</td></tr>
+                    <tr><td>选择领域 + 审核通过</td><td>领域标签（主领域/子领域）</td><td>qualification</td></tr>
+                    <tr><td>上传证书 + 审核通过</td><td>资质认证标签</td><td>qualification</td></tr>
+                </tbody>
+            </table>
+
+            <h4>节点3：实名认证</h4>
+            <table>
+                <thead>
+                    <tr><th>触发条件</th><th>授予标签</th><th>标签分类</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>三要素认证通过</td><td><code>已实名</code></td><td>identity</td></tr>
+                </tbody>
+            </table>
+
+            <h4>节点4：准入考试</h4>
+            <table>
+                <thead>
+                    <tr><th>触发条件</th><th>授予标签</th><th>标签分类</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>考试通过（60-70分）</td><td><code>初级标注师</code></td><td>qualification</td></tr>
+                    <tr><td>考试通过（70-85分）</td><td><code>中级标注师</code></td><td>qualification</td></tr>
+                    <tr><td>考试通过（85分以上）</td><td><code>高级标注师</code></td><td>qualification</td></tr>
+                </tbody>
+            </table>
+
+            <h4>节点5：岗位申请审核</h4>
+            <table>
+                <thead>
+                    <tr><th>触发条件</th><th>授予标签</th><th>标签分类</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>AI审核通过</td><td>岗位配置的授予标签</td><td>岗位配置</td></tr>
+                    <tr><td>人工审核通过</td><td>岗位配置的授予标签</td><td>岗位配置</td></tr>
+                    <tr><td>审核通过</td><td><code>[岗位名]入口</code></td><td>source</td></tr>
+                </tbody>
+            </table>
+
+            <h4>节点6：项目参与</h4>
+            <table>
+                <thead>
+                    <tr><th>触发条件</th><th>授予标签</th><th>标签分类</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>加入项目</td><td><code>[项目名]参与者</code></td><td>experience</td></tr>
+                    <tr><td>试标通过</td><td><code>[项目名]试标通过</code></td><td>experience</td></tr>
+                    <tr><td>分配质检角色</td><td><code>质检员</code></td><td>experience</td></tr>
+                    <tr><td>完成项目考试</td><td><code>[项目名]认证</code></td><td>qualification</td></tr>
+                </tbody>
+            </table>
+
+            <h4>节点7：任务执行</h4>
+            <table>
+                <thead>
+                    <tr><th>触发条件</th><th>授予标签</th><th>标签分类</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>完成首题</td><td><code>任务类型标签</code>（如：对话标注）</td><td>experience</td></tr>
+                    <tr><td>累计100题</td><td><code>百题标注</code></td><td>experience</td></tr>
+                    <tr><td>累计1000题</td><td><code>千题标注</code></td><td>experience</td></tr>
+                    <tr><td>累计10000题</td><td><code>万题标注</code></td><td>experience</td></tr>
+                    <tr><td>质量评分 ≥ 4.5</td><td><code>S级质量</code></td><td>behavior</td></tr>
+                    <tr><td>质量评分 ≥ 4.0</td><td><code>A级质量</code></td><td>behavior</td></tr>
+                </tbody>
+            </table>
+
+            <h4>节点8：持续运营（系统定时任务）</h4>
+            <table>
+                <thead>
+                    <tr><th>触发条件</th><th>授予/更新标签</th><th>标签分类</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>7天内有活动</td><td><code>高活跃</code></td><td>behavior</td></tr>
+                    <tr><td>30天内有活动</td><td><code>中活跃</code></td><td>behavior</td></tr>
+                    <tr><td>30天无活动</td><td><code>低活跃</code></td><td>behavior</td></tr>
+                    <tr><td>90天无活动</td><td><code>沉默用户</code></td><td>behavior</td></tr>
+                    <tr><td>综合评估</td><td>VIP等级更新</td><td>operation</td></tr>
+                    <tr><td>管理员标记</td><td>特殊标记</td><td>operation</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- 五、岗位与标签的关系 -->
+        <section id="section5">
+            <h2>五、岗位与标签的关系</h2>
+            
+            <h3>5.1 岗位的双向标签配置</h3>
+            <div class="diagram">┌─────────────────────────────────────────────────────────────────┐
+│                         岗位标签配置                             │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  【准入标签要求】                    【审核通过授予标签】          │
+│  ┌─────────────────────┐          ┌─────────────────────┐      │
+│  │ • 筛选条件          │          │ • 入口标记          │      │
+│  │ • 硬性门槛          │    →→→   │ • 能力认证          │      │
+│  │ • 匹配度计算        │  审核通过  │ • 项目准入资格      │      │
+│  └─────────────────────┘          └─────────────────────┘      │
+│                                                                 │
+│  示例：                                                         │
+│  ┌─────────────────────┐          ┌─────────────────────┐      │
+│  │ 准入要求:           │          │ 授予标签:           │      │
+│  │  • 学历: 硕士及以上  │    →→→   │  • [岗位名]入口     │      │
+│  │  • 领域: 经济金融   │          │  • 金融专家         │      │
+│  │  • 认证: 已实名     │          │  • 项目A准入资格    │      │
+│  └─────────────────────┘          └─────────────────────┘      │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘</div>
+
+            <h3>5.2 岗位标签配置数据结构</h3>
+            <pre><code>{
+  "job_id": 1,
+  "job_name": "金融领域数据标注专家",
+  
+  "tag_requirements": {
+    "required": [
+      {"category": "identity", "group": "学历认证", "values": ["硕士", "博士"]},
+      {"category": "identity", "group": "实名认证", "values": ["已实名"]}
+    ],
+    "preferred": [
+      {"category": "qualification", "group": "主领域", "values": ["经济金融"]},
+      {"category": "qualification", "group": "资质认证", "values": ["CFA", "CPA"]}
+    ],
+    "excluded": [
+      {"category": "operation", "group": "风险标记", "values": ["疑似作弊"]}
+    ]
+  },
+  
+  "grant_tags_on_approval": [
+    {"category": "source", "group": "岗位入口", "value": "金融标注岗入口"},
+    {"category": "qualification", "group": "项目认证", "value": "金融项目准入资格"}
+  ]
+}</code></pre>
+        </section>
+
+        <!-- 六、项目与标签的关系 -->
+        <section id="section6">
+            <h2>六、项目与标签的关系</h2>
+            
+            <h3>6.1 项目按标签筛选专家</h3>
+            <p>项目不再强依赖岗位，可直接配置标签筛选条件：</p>
+            
+            <div class="diagram">┌─────────────────────────────────────────────────────────────────┐
+│                       项目专家筛选配置                           │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  方式一：按标签筛选（推荐）                                       │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │ 必须满足:                                                │   │
+│  │   • 学历 IN (硕士, 博士)                                 │   │
+│  │   • 领域 = 经济金融                                      │   │
+│  │   • 平台认证 IN (中级标注师, 高级标注师)                   │   │
+│  │                                                         │   │
+│  │ 优先满足:                                                │   │
+│  │   • 质量评级 IN (S级, A级)                               │   │
+│  │   • 活跃度 = 高活跃                                      │   │
+│  │                                                         │   │
+│  │ 排除条件:                                                │   │
+│  │   • 风险标记 = 疑似作弊                                  │   │
+│  │   • 信用等级 = 较差                                      │   │
+│  └─────────────────────────────────────────────────────────┘   │
+│                                                                 │
+│  方式二：按岗位筛选（可选）                                       │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │ 关联岗位: 金融领域数据标注专家                             │   │
+│  │ 作用:                                                    │   │
+│  │   • 从该岗位通过的专家中筛选                              │   │
+│  │   • 用于推广引流                                         │   │
+│  └─────────────────────────────────────────────────────────┘   │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘</div>
+
+            <h3>6.2 项目筛选配置数据结构</h3>
+            <pre><code>{
+  "project_id": 1,
+  "project_name": "金融数据标注项目",
+  
+  "expert_filter": {
+    "mode": "tag",  // tag: 按标签筛选, job: 按岗位筛选, mixed: 混合
+    
+    "tag_conditions": {
+      "must": [
+        {"category": "identity", "group": "学历认证", "operator": "in", "values": ["硕士", "博士"]},
+        {"category": "qualification", "group": "主领域", "operator": "eq", "value": "经济金融"}
+      ],
+      "should": [
+        {"category": "behavior", "group": "质量评级", "operator": "in", "values": ["S级", "A级"]}
+      ],
+      "must_not": [
+        {"category": "operation", "group": "风险标记", "operator": "eq", "value": "疑似作弊"}
+      ]
+    },
+    
+    "job_ids": [1, 2],  // 可选关联岗位
+    "job_filter_mode": "union"  // union: 并集, intersection: 交集
+  }
+}</code></pre>
+        </section>
+
+        <!-- 七、数据库设计 -->
+        <section id="section7">
+            <h2>七、数据库设计</h2>
+            
+            <h3>7.1 标签表重构</h3>
+            <pre><code>-- 标签定义表（重构）
+CREATE TABLE tbl_tags (
+    tag_id SERIAL PRIMARY KEY,
+    
+    -- 标签分类
+    category VARCHAR(50) NOT NULL,       -- 标签大类: identity/qualification/behavior/experience/source/operation
+    tag_group VARCHAR(100) NOT NULL,     -- 标签组: 学历认证/主领域/活跃度 等
+    tag_value VARCHAR(200) NOT NULL,     -- 标签值: 硕士/博士/高活跃 等
+    
+    -- 标签属性
+    display_name VARCHAR(200),           -- 显示名称
+    description TEXT,                    -- 标签描述
+    sort_order INT DEFAULT 0,            -- 排序
+    color VARCHAR(20),                   -- 标签颜色（用于前端展示）
+    icon VARCHAR(100),                   -- 标签图标
+    
+    -- 标签规则
+    is_system BOOLEAN DEFAULT false,     -- 是否系统标签（不可删除）
+    is_auto_grant BOOLEAN DEFAULT false, -- 是否自动授予
+    auto_grant_rule JSONB,               -- 自动授予规则（JSON）
+    is_exclusive BOOLEAN DEFAULT false,  -- 是否互斥（同组只能有一个）
+    
+    -- 通用字段
+    deleted BOOLEAN NOT NULL DEFAULT false,
+    create_time TIMESTAMP NOT NULL DEFAULT (now() AT TIME ZONE 'utc'),
+    update_time TIMESTAMP NOT NULL DEFAULT (now() AT TIME ZONE 'utc'),
+    
+    -- 唯一约束
+    CONSTRAINT uq_tag_category_group_value UNIQUE (category, tag_group, tag_value)
+);
+
+COMMENT ON TABLE tbl_tags IS '标签定义表';
+COMMENT ON COLUMN tbl_tags.category IS '标签大类: identity-身份认证, qualification-能力资质, behavior-行为表现, experience-项目经验, source-来源渠道, operation-运营管理';
+COMMENT ON COLUMN tbl_tags.is_exclusive IS '是否互斥：同一tag_group下，专家只能拥有一个标签';</code></pre>
+
+            <h3>7.2 专家标签关联表</h3>
+            <pre><code>-- 专家标签关联表（新增）
+CREATE TABLE tbl_expert_tags (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,                -- 专家用户ID
+    tag_id INT NOT NULL,                 -- 标签ID
+    
+    -- 授予信息
+    grant_source VARCHAR(50) NOT NULL,   -- 授予来源: system/manual/job/project/exam
+    grant_source_id INT,                 -- 来源ID（岗位ID/项目ID/考试ID等）
+    grant_source_name VARCHAR(200),      -- 来源名称
+    granted_by INT,                      -- 授予人（人工授予时）
+    granted_at TIMESTAMP NOT NULL DEFAULT (now() AT TIME ZONE 'utc'),
+    
+    -- 有效期
+    valid_from TIMESTAMP,                -- 生效时间
+    valid_until TIMESTAMP,               -- 失效时间（NULL表示永久有效）
+    
+    -- 状态
+    status VARCHAR(20) DEFAULT 'active', -- active/expired/revoked
+    revoke_reason TEXT,                  -- 撤销原因
+    revoked_by INT,                      -- 撤销人
+    revoked_at TIMESTAMP,                -- 撤销时间
+    
+    -- 通用字段
+    deleted BOOLEAN NOT NULL DEFAULT false,
+    create_time TIMESTAMP NOT NULL DEFAULT (now() AT TIME ZONE 'utc'),
+    update_time TIMESTAMP NOT NULL DEFAULT (now() AT TIME ZONE 'utc'),
+    
+    -- 唯一约束（同一用户同一标签只能有一条有效记录）
+    CONSTRAINT uq_expert_tag_active UNIQUE (user_id, tag_id) WHERE status = 'active' AND deleted = false
+);
+
+CREATE INDEX idx_expert_tags_user_id ON tbl_expert_tags(user_id) WHERE deleted = false;
+CREATE INDEX idx_expert_tags_tag_id ON tbl_expert_tags(tag_id) WHERE deleted = false;
+CREATE INDEX idx_expert_tags_status ON tbl_expert_tags(user_id, status) WHERE deleted = false;
+
+COMMENT ON TABLE tbl_expert_tags IS '专家标签关联表';
+COMMENT ON COLUMN tbl_expert_tags.grant_source IS '授予来源: system-系统自动, manual-人工授予, job-岗位审核, project-项目授予, exam-考试通过';</code></pre>
+
+            <h3>7.3 岗位标签配置表</h3>
+            <pre><code>-- 岗位标签配置表（新增）
+CREATE TABLE tbl_job_tag_configs (
+    id SERIAL PRIMARY KEY,
+    job_id INT NOT NULL,                 -- 岗位ID
+    
+    -- 配置类型
+    config_type VARCHAR(20) NOT NULL,    -- requirement: 准入要求, grant: 授予标签
+    requirement_type VARCHAR(20),        -- required/preferred/excluded（仅requirement类型使用）
+    
+    -- 标签信息
+    tag_id INT,                          -- 标签ID（直接关联）
+    tag_category VARCHAR(50),            -- 或：标签大类
+    tag_group VARCHAR(100),              -- 或：标签组
+    tag_values JSONB,                    -- 或：标签值数组
+    
+    -- 通用字段
+    deleted BOOLEAN NOT NULL DEFAULT false,
+    create_time TIMESTAMP NOT NULL DEFAULT (now() AT TIME ZONE 'utc'),
+    update_time TIMESTAMP NOT NULL DEFAULT (now() AT TIME ZONE 'utc')
+);
+
+CREATE INDEX idx_job_tag_configs_job_id ON tbl_job_tag_configs(job_id) WHERE deleted = false;
+
+COMMENT ON TABLE tbl_job_tag_configs IS '岗位标签配置表';
+COMMENT ON COLUMN tbl_job_tag_configs.config_type IS '配置类型: requirement-准入要求, grant-审核通过授予';
+COMMENT ON COLUMN tbl_job_tag_configs.requirement_type IS '要求类型: required-必须, preferred-优先, excluded-排除';</code></pre>
+
+            <h3>7.4 项目标签筛选配置表</h3>
+            <pre><code>-- 项目专家筛选配置表（新增）
+CREATE TABLE tbl_project_expert_filter (
+    id SERIAL PRIMARY KEY,
+    project_id INT NOT NULL,             -- 项目ID
+    
+    -- 筛选模式
+    filter_mode VARCHAR(20) NOT NULL DEFAULT 'tag',  -- tag/job/mixed
+    
+    -- 标签筛选条件（JSON）
+    tag_conditions JSONB,                -- 标签筛选条件
+    
+    -- 岗位关联（可选）
+    job_ids JSONB,                       -- 关联岗位ID数组
+    job_filter_mode VARCHAR(20),         -- union/intersection
+    
+    -- 通用字段
+    deleted BOOLEAN NOT NULL DEFAULT false,
+    create_time TIMESTAMP NOT NULL DEFAULT (now() AT TIME ZONE 'utc'),
+    update_time TIMESTAMP NOT NULL DEFAULT (now() AT TIME ZONE 'utc')
+);
+
+CREATE UNIQUE INDEX idx_project_expert_filter_project ON tbl_project_expert_filter(project_id) WHERE deleted = false;
+
+COMMENT ON TABLE tbl_project_expert_filter IS '项目专家筛选配置表';
+COMMENT ON COLUMN tbl_project_expert_filter.filter_mode IS '筛选模式: tag-按标签, job-按岗位, mixed-混合';</code></pre>
+
+            <h3>7.5 标签授予日志表</h3>
+            <pre><code>-- 标签授予日志表（新增）
+CREATE TABLE tbl_tag_grant_logs (
+    log_id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,                -- 专家用户ID
+    tag_id INT NOT NULL,                 -- 标签ID
+    
+    -- 操作信息
+    action VARCHAR(20) NOT NULL,         -- grant/revoke/update
+    
+    -- 授予来源
+    grant_source VARCHAR(50),            -- system/manual/job/project/exam
+    grant_source_id INT,
+    grant_source_name VARCHAR(200),
+    
+    -- 操作人
+    operator_id INT,                     -- 操作人ID
+    operator_type VARCHAR(20),           -- system/admin/expert
+    
+    -- 备注
+    remark TEXT,
+    
+    -- 时间
+    create_time TIMESTAMP NOT NULL DEFAULT (now() AT TIME ZONE 'utc')
+);
+
+CREATE INDEX idx_tag_grant_logs_user_id ON tbl_tag_grant_logs(user_id);
+CREATE INDEX idx_tag_grant_logs_tag_id ON tbl_tag_grant_logs(tag_id);
+CREATE INDEX idx_tag_grant_logs_create_time ON tbl_tag_grant_logs(create_time DESC);
+
+COMMENT ON TABLE tbl_tag_grant_logs IS '标签授予日志表';</code></pre>
+        </section>
+
+        <!-- 八、推广奖励机制 -->
+        <section id="section8">
+            <h2>八、推广奖励机制说明</h2>
+            
+            <h3>8.1 当前机制保持</h3>
+            <p>推广奖励机制与岗位绑定，保持不变：</p>
+            
+            <div class="diagram">推广奖励流程
+═══════════════════════════════════════════════════
+
+专家A                    专家B
+  │                        │
+  │  ① 生成邀请链接        │
+  │  (携带岗位ID)          │
+  │        ────────────►   │
+  │                        │
+  │                    ② 注册
+  │                    (记录邀请人+岗位)
+  │                        │
+  │                    ③ 申请岗位
+  │                        │
+  │                    ④ 审核通过
+  │                        │
+  │                    ⑤ 完成2道题
+  │                        │
+  │  ⑥ 发放推广奖金         │
+  │◄────────────────────   │
+  │                        │</div>
+
+            <h3>8.2 推广奖励与标签的关系</h3>
+            <ul>
+                <li>推广奖励仍然与岗位绑定</li>
+                <li>被邀请人通过岗位审核时，同时：
+                    <ul>
+                        <li>触发推广奖励流程</li>
+                        <li>授予岗位入口标签</li>
+                        <li>授予岗位配置的其他标签</li>
+                    </ul>
+                </li>
+            </ul>
+        </section>
+
+        <!-- 九、实施建议 -->
+        <section id="section9">
+            <h2>九、实施建议</h2>
+            
+            <h3>9.1 分阶段实施</h3>
+            <table>
+                <thead>
+                    <tr><th>阶段</th><th>内容</th><th>优先级</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>阶段1</td><td>标签分类体系搭建、基础数据表创建</td><td><strong>P0</strong></td></tr>
+                    <tr><td>阶段2</td><td>岗位标签配置功能、审核授予标签</td><td><strong>P0</strong></td></tr>
+                    <tr><td>阶段3</td><td>自动标签授予机制（注册/考试/任务）</td><td>P1</td></tr>
+                    <tr><td>阶段4</td><td>项目按标签筛选专家</td><td>P1</td></tr>
+                    <tr><td>阶段5</td><td>行为标签自动计算（活跃度/质量）</td><td>P2</td></tr>
+                    <tr><td>阶段6</td><td>标签统计分析、运营看板</td><td>P2</td></tr>
+                </tbody>
+            </table>
+
+            <h3>9.2 兼容性考虑</h3>
+            <ul>
+                <li>现有 <code>tbl_users.tags</code> 字段保留，逐步迁移到新的 <code>tbl_expert_tags</code> 表</li>
+                <li>现有 <code>tbl_project_jobs</code> 关系保留，新增按标签筛选方式</li>
+                <li>现有岗位申请流程保留，增加标签授予逻辑</li>
+            </ul>
+
+            <h3>9.3 初始化标签数据</h3>
+            <p>建议预置的系统标签：</p>
+            <pre><code>-- 身份认证类
+INSERT INTO tbl_tags (category, tag_group, tag_value, is_system, is_exclusive) VALUES
+('identity', '实名认证', '已实名', true, true),
+('identity', '学历认证', '本科', true, true),
+('identity', '学历认证', '硕士', true, true),
+('identity', '学历认证', '博士', true, true),
+('identity', '学历认证', '博士后', true, true),
+('identity', '学校类型', '985', true, false),
+('identity', '学校类型', '211', true, false),
+('identity', '学校类型', '双一流', true, false),
+('identity', '学校类型', '海外名校', true, false);
+
+-- 能力资质类
+INSERT INTO tbl_tags (category, tag_group, tag_value, is_system, is_exclusive) VALUES
+('qualification', '平台认证', '初级标注师', true, true),
+('qualification', '平台认证', '中级标注师', true, true),
+('qualification', '平台认证', '高级标注师', true, true);
+
+-- 行为表现类
+INSERT INTO tbl_tags (category, tag_group, tag_value, is_system, is_exclusive) VALUES
+('behavior', '活跃度', '高活跃', true, true),
+('behavior', '活跃度', '中活跃', true, true),
+('behavior', '活跃度', '低活跃', true, true),
+('behavior', '活跃度', '沉默用户', true, true),
+('behavior', '质量评级', 'S级', true, true),
+('behavior', '质量评级', 'A级', true, true),
+('behavior', '质量评级', 'B级', true, true),
+('behavior', '质量评级', 'C级', true, true);
+
+-- 运营管理类
+INSERT INTO tbl_tags (category, tag_group, tag_value, is_system) VALUES
+('operation', 'VIP等级', '普通', true),
+('operation', 'VIP等级', '银牌', true),
+('operation', 'VIP等级', '金牌', true),
+('operation', 'VIP等级', '钻石', true),
+('operation', '风险标记', '疑似作弊', true),
+('operation', '风险标记', '多次返工', true);</code></pre>
+        </section>
+
+        <!-- 十、总结 -->
+        <section id="section10">
+            <h2>十、总结</h2>
+            
+            <h3>10.1 核心变化</h3>
+            <table>
+                <thead>
+                    <tr><th>维度</th><th>原设计</th><th>新设计</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>项目-岗位关系</td><td>强关联</td><td><strong>可选关联</strong></td></tr>
+                    <tr><td>专家筛选方式</td><td>通过岗位</td><td><strong>通过标签（主）+ 岗位（辅）</strong></td></tr>
+                    <tr><td>标签管理</td><td>简单列表</td><td><strong>分类分层体系</strong></td></tr>
+                    <tr><td>标签来源</td><td>手动为主</td><td><strong>自动+手动</strong></td></tr>
+                    <tr><td>岗位作用</td><td>项目入口</td><td><strong>招聘入口 + 标签授予</strong></td></tr>
+                </tbody>
+            </table>
+
+            <h3>10.2 收益分析</h3>
+            <div class="benefit-list">
+                <div class="benefit-item">
+                    <div class="icon">🎯</div>
+                    <div class="title">精准匹配</div>
+                    <div class="desc">项目可以更精准地找到符合要求的专家</div>
+                </div>
+                <div class="benefit-item">
+                    <div class="icon">🔄</div>
+                    <div class="title">灵活运营</div>
+                    <div class="desc">减少岗位与项目的耦合，运营更灵活</div>
+                </div>
+                <div class="benefit-item">
+                    <div class="icon">👤</div>
+                    <div class="title">专家画像</div>
+                    <div class="desc">建立完整的专家能力画像，支撑智能推荐</div>
+                </div>
+                <div class="benefit-item">
+                    <div class="icon">📋</div>
+                    <div class="title">可追溯性</div>
+                    <div class="desc">标签授予有迹可循，便于审计</div>
+                </div>
+                <div class="benefit-item">
+                    <div class="icon">📈</div>
+                    <div class="title">扩展性强</div>
+                    <div class="desc">标签体系可灵活扩展，支持业务发展</div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <footer class="footer">
+        <p>文档版本：v1.0 | 作者：AI 助手 | 日期：2026-01-23</p>
+    </footer>
+</body>
+</html>
