@@ -427,9 +427,14 @@
     <!-- 侧边栏 -->
     <aside class="sidebar">
         <div class="sidebar-section">
+            <div class="sidebar-title">前期调研</div>
+            <a href="#research">框架对比分析</a>
+        </div>
+        <div class="sidebar-section">
             <div class="sidebar-title">概述</div>
             <a href="#overview">项目概述</a>
             <a href="#architecture">整体架构</a>
+            <a href="#llm-calls">大模型调用环节</a>
         </div>
         <div class="sidebar-section">
             <div class="sidebar-title">核心组件</div>
@@ -454,14 +459,336 @@
 
     <!-- 主内容 -->
     <main class="main">
+        <!-- 前期调研 -->
+        <section class="section" id="research">
+            <h2>1. 前期调研：框架对比分析</h2>
+
+            <h3>1.1 候选框架概览</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>框架</th>
+                            <th>来源团队</th>
+                            <th>GitHub Stars</th>
+                            <th>技术栈</th>
+                            <th>定位</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>OpenManus</strong></td>
+                            <td>MetaGPT (清华)</td>
+                            <td>54k</td>
+                            <td>Python</td>
+                            <td>通用 Agent 框架</td>
+                        </tr>
+                        <tr>
+                            <td><strong>LangGraph</strong></td>
+                            <td>LangChain</td>
+                            <td>~15k</td>
+                            <td>Python</td>
+                            <td>Agent 编排引擎</td>
+                        </tr>
+                        <tr>
+                            <td><strong>OpenClaw</strong></td>
+                            <td>Peter Steinberger</td>
+                            <td>181k</td>
+                            <td>TypeScript</td>
+                            <td>个人 AI 助手网关</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>1.2 核心架构对比</h3>
+            <div class="table-container">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>维度</th>
+                            <th>OpenManus</th>
+                            <th>LangGraph</th>
+                            <th>OpenClaw</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Agent 模式</strong></td>
+                            <td>ReAct + ToolCall</td>
+                            <td>状态图（Graph）</td>
+                            <td>Gateway + Lanes</td>
+                        </tr>
+                        <tr>
+                            <td><strong>执行流程</strong></td>
+                            <td>线性 + 分支</td>
+                            <td>DAG 状态机</td>
+                            <td>队列并发</td>
+                        </tr>
+                        <tr>
+                            <td><strong>多 Agent</strong></td>
+                            <td><span class="check">✓</span> Flow 模块</td>
+                            <td><span class="check">✓</span> 原生支持</td>
+                            <td><span class="partial">⚠</span> Subagent</td>
+                        </tr>
+                        <tr>
+                            <td><strong>代码量</strong></td>
+                            <td>~5k 行</td>
+                            <td>库形式</td>
+                            <td>~40k 行</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>1.3 上下文管理能力对比</h3>
+            <div class="table-container">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>能力</th>
+                            <th>OpenManus</th>
+                            <th>LangGraph</th>
+                            <th>OpenClaw</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>对话历史</strong></td>
+                            <td><span class="check">✓</span></td>
+                            <td><span class="check">✓</span></td>
+                            <td><span class="check">✓</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>状态持久化</strong></td>
+                            <td><span class="cross">✗</span></td>
+                            <td><span class="check">✓</span> <strong>Checkpoint</strong></td>
+                            <td><span class="check">✓</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>中断恢复</strong></td>
+                            <td><span class="cross">✗</span></td>
+                            <td><span class="check">✓</span> <strong>原生支持</strong></td>
+                            <td><span class="partial">⚠</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>长期记忆</strong></td>
+                            <td><span class="cross">✗</span> 需自己加</td>
+                            <td><span class="cross">✗</span> 需自己加</td>
+                            <td><span class="check">✓</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>RAG/向量</strong></td>
+                            <td><span class="cross">✗</span> 需自己加</td>
+                            <td><span class="cross">✗</span> 需自己加</td>
+                            <td><span class="cross">✗</span> 需自己加</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p><strong>结论</strong>：LangGraph 的 Checkpoint 机制最强，但三者都需要额外集成专业记忆工具（如 Letta）。</p>
+
+            <h3>1.4 Tool/MCP 管理能力对比</h3>
+            <div class="table-container">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>能力</th>
+                            <th>OpenManus</th>
+                            <th>LangGraph</th>
+                            <th>OpenClaw</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>内置工具数</strong></td>
+                            <td>15+</td>
+                            <td>0 (需自建)</td>
+                            <td>100+ AgentSkills</td>
+                        </tr>
+                        <tr>
+                            <td><strong>MCP 支持</strong></td>
+                            <td><span class="check">✓</span> <strong>原生</strong></td>
+                            <td><span class="partial">⚠</span> 需接入</td>
+                            <td><span class="check">✓</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>工具注册</strong></td>
+                            <td><span class="check">✓</span></td>
+                            <td><span class="cross">✗</span> 需自建</td>
+                            <td><span class="check">✓</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>沙箱执行</strong></td>
+                            <td><span class="check">✓</span></td>
+                            <td><span class="cross">✗</span> 需自建</td>
+                            <td><span class="partial">⚠</span> 有安全问题</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p><strong>结论</strong>：OpenManus 在工具层明显领先，MCP 原生支持且内置工具丰富。</p>
+
+            <h3>1.5 开发效率对比（1-3 人团队视角）</h3>
+            <div class="table-container">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>维度</th>
+                            <th>OpenManus</th>
+                            <th>LangGraph</th>
+                            <th>OpenClaw</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>开箱即用</strong></td>
+                            <td>⭐⭐⭐⭐⭐</td>
+                            <td>⭐⭐</td>
+                            <td>⭐⭐⭐⭐</td>
+                        </tr>
+                        <tr>
+                            <td><strong>上手时间</strong></td>
+                            <td>1-2 天</td>
+                            <td>1-2 周</td>
+                            <td>2-3 天</td>
+                        </tr>
+                        <tr>
+                            <td><strong>MVP 时间</strong></td>
+                            <td>2-3 周</td>
+                            <td>1-2 月</td>
+                            <td>2-3 周</td>
+                        </tr>
+                        <tr>
+                            <td><strong>二次开发难度</strong></td>
+                            <td>⭐⭐ 低</td>
+                            <td>⭐⭐⭐⭐ 中高</td>
+                            <td>⭐⭐⭐ 中</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>1.6 上下文管理工具对比</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>工具</th>
+                            <th>类型</th>
+                            <th>核心能力</th>
+                            <th>推荐度</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Letta (MemGPT)</strong> <span class="recommend-badge">推荐</span></td>
+                            <td>Agent 记忆框架</td>
+                            <td>分层记忆：核心记忆 + 召回记忆 + 档案记忆</td>
+                            <td>⭐⭐⭐⭐⭐</td>
+                        </tr>
+                        <tr>
+                            <td><strong>LangGraph Checkpoint</strong></td>
+                            <td>状态持久化</td>
+                            <td>状态快照、中断恢复、回滚</td>
+                            <td>⭐⭐⭐⭐</td>
+                        </tr>
+                        <tr>
+                            <td><strong>LongLMLingua</strong></td>
+                            <td>Prompt 压缩</td>
+                            <td>3-6x 压缩率</td>
+                            <td>⭐⭐⭐⭐</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>1.7 模型管理工具对比</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>工具</th>
+                            <th>类型</th>
+                            <th>模型数</th>
+                            <th>定价</th>
+                            <th>推荐度</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>LiteLLM</strong> <span class="recommend-badge">推荐</span></td>
+                            <td>开源网关</td>
+                            <td>100+</td>
+                            <td>免费</td>
+                            <td>⭐⭐⭐⭐⭐</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Portkey AI</strong></td>
+                            <td>企业网关</td>
+                            <td>1600+</td>
+                            <td>付费</td>
+                            <td>⭐⭐⭐⭐</td>
+                        </tr>
+                        <tr>
+                            <td><strong>OpenRouter</strong></td>
+                            <td>代理服务</td>
+                            <td>200+</td>
+                            <td>按量付费</td>
+                            <td>⭐⭐⭐</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>1.8 最终选型决策</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>需求</th>
+                            <th>选择</th>
+                            <th>理由</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Agent 框架</strong></td>
+                            <td>OpenManus</td>
+                            <td>开箱即用、MCP 原生支持、Python 技术栈</td>
+                        </tr>
+                        <tr>
+                            <td><strong>上下文管理</strong></td>
+                            <td>Letta (MemGPT)</td>
+                            <td>专业分层记忆、Agent 自管理记忆</td>
+                        </tr>
+                        <tr>
+                            <td><strong>模型管理</strong></td>
+                            <td>LiteLLM</td>
+                            <td>开源免费、100+ 模型统一 API</td>
+                        </tr>
+                        <tr>
+                            <td><strong>工具协议</strong></td>
+                            <td>MCP</td>
+                            <td>行业标准、工具互通性好</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="flow-step success">
+                <h4>最终推荐：OpenManus + Letta + LiteLLM 组合，ROI 最高</h4>
+            </div>
+        </section>
+
         <!-- 项目概述 -->
         <section class="section" id="overview">
-            <h2>1. 项目概述</h2>
+            <h2>2. 项目概述</h2>
             
-            <h3>1.1 项目目标</h3>
+            <h3>2.1 项目目标</h3>
             <p>构建一个企业级 AI Agent 平台，让业务人员通过自然语言完成复杂的数据处理、分析和报告生成任务。</p>
 
-            <h3>1.2 核心能力</h3>
+            <h3>2.2 核心能力</h3>
             <div class="feature-grid">
                 <div class="feature-card">
                     <h4>🗣️ 自然语言交互</h4>
@@ -524,7 +851,7 @@
 
         <!-- 整体架构 -->
         <section class="section" id="architecture">
-            <h2>2. 整体架构</h2>
+            <h2>3. 整体架构</h2>
 
             <h3>2.1 系统架构图</h3>
             <div class="architecture-diagram">┌─────────────────────────────────────────────────────────────────────────┐
@@ -592,9 +919,221 @@
             </div>
         </section>
 
+        <!-- 大模型调用环节说明 -->
+        <section class="section" id="llm-calls">
+            <h2>4. 大模型调用环节说明</h2>
+            <p>在整个 Agent 执行流程中，以下环节需要调用大模型（LLM）。这是理解系统成本和性能的关键。</p>
+
+            <h3>4.1 大模型调用全景图</h3>
+            <div class="architecture-diagram">用户输入: "帮我导出上周标注数据，生成分析报告"
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 🤖 LLM 调用 1: 意图理解                                                  │
+│    模型: fast-task (DeepSeek)                                            │
+│    输入: 用户原始输入                                                     │
+│    输出: 任务类型、关键参数                                               │
+│    Token: ~500 input / ~200 output                                       │
+└─────────────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 🔍 Embedding 调用: 上下文检索                                             │
+│    模型: text-embedding-3-small                                          │
+│    输入: 用户输入 + 关键词                                                │
+│    输出: 向量表示 (用于相似度搜索)                                        │
+└─────────────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 🤖 LLM 调用 2: 任务规划                                                  │
+│    模型: main-reasoning (Claude/GPT-4o)                                  │
+│    输入: 用户输入 + 检索到的上下文 + 可用工具列表                          │
+│    输出: 执行计划 (JSON 格式的步骤列表)                                   │
+│    Token: ~2000 input / ~500 output                                      │
+└─────────────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 🤖 LLM 调用 3-N: 循环执行 (每个步骤)                                      │
+│    - 工具选择与参数生成 (main-reasoning)                                  │
+│    - 结果观察与判断 (fast-task)                                          │
+│    - (可选) 重新规划 (main-reasoning)                                    │
+└─────────────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 🤖 LLM 调用 N+1: 结果汇总                                                │
+│    模型: main-reasoning                                                  │
+│    输入: 所有步骤执行结果                                                 │
+│    输出: 最终答案 + 总结说明                                              │
+│    Token: ~3000 input / ~1000 output                                     │
+└─────────────────────────────────────────────────────────────────────────┘</div>
+
+            <h3>4.2 各环节大模型调用详解</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>环节</th>
+                            <th>调用类型</th>
+                            <th>推荐模型</th>
+                            <th>输入内容</th>
+                            <th>预估 Token</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>意图理解</strong></td>
+                            <td><span class="tag tag-primary">LLM</span></td>
+                            <td>DeepSeek (fast)</td>
+                            <td>用户原始输入</td>
+                            <td>500/200</td>
+                        </tr>
+                        <tr>
+                            <td><strong>上下文检索</strong></td>
+                            <td><span class="tag tag-success">Embedding</span></td>
+                            <td>text-embedding-3-small</td>
+                            <td>查询文本</td>
+                            <td>100/-</td>
+                        </tr>
+                        <tr>
+                            <td><strong>任务规划</strong></td>
+                            <td><span class="tag tag-primary">LLM</span></td>
+                            <td>Claude/GPT-4o (main)</td>
+                            <td>输入+上下文+工具</td>
+                            <td>2000/500</td>
+                        </tr>
+                        <tr>
+                            <td><strong>工具选择</strong></td>
+                            <td><span class="tag tag-primary">LLM</span></td>
+                            <td>Claude/GPT-4o (main)</td>
+                            <td>步骤+上下文+工具定义</td>
+                            <td>1500/300</td>
+                        </tr>
+                        <tr>
+                            <td><strong>结果观察</strong></td>
+                            <td><span class="tag tag-primary">LLM</span></td>
+                            <td>DeepSeek (fast)</td>
+                            <td>执行结果</td>
+                            <td>800/200</td>
+                        </tr>
+                        <tr>
+                            <td><strong>代码生成</strong></td>
+                            <td><span class="tag tag-primary">LLM</span></td>
+                            <td>DeepSeek Coder</td>
+                            <td>任务描述</td>
+                            <td>1000/500</td>
+                        </tr>
+                        <tr>
+                            <td><strong>报告生成</strong></td>
+                            <td><span class="tag tag-primary">LLM</span></td>
+                            <td>Claude/GPT-4o (main)</td>
+                            <td>数据+模板</td>
+                            <td>3000/2000</td>
+                        </tr>
+                        <tr>
+                            <td><strong>结果汇总</strong></td>
+                            <td><span class="tag tag-primary">LLM</span></td>
+                            <td>Claude/GPT-4o (main)</td>
+                            <td>所有步骤结果</td>
+                            <td>3000/1000</td>
+                        </tr>
+                        <tr>
+                            <td><strong>记忆更新</strong></td>
+                            <td><span class="tag tag-success">Embedding</span></td>
+                            <td>text-embedding-3-small</td>
+                            <td>对话内容</td>
+                            <td>500/-</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>4.3 场景 Token 消耗估算</h3>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>场景一：数据导出与分析报告</h4>
+                    <p>总 Token: ~28,300<br>预估成本: ~$0.12</p>
+                </div>
+                <div class="feature-card">
+                    <h4>场景二：个人周报生成</h4>
+                    <p>总 Token: ~18,550<br>预估成本: ~$0.09</p>
+                </div>
+                <div class="feature-card">
+                    <h4>场景三：批量评测结果处理</h4>
+                    <p>总 Token: ~32,300<br>预估成本: ~$0.15</p>
+                </div>
+            </div>
+
+            <h3>4.4 模型选择策略</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>任务类型</th>
+                            <th>推荐模型</th>
+                            <th>理由</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>复杂推理（规划、汇总）</td>
+                            <td>Claude/GPT-4o</td>
+                            <td>需要强推理能力</td>
+                        </tr>
+                        <tr>
+                            <td>简单任务（意图理解、观察）</td>
+                            <td>DeepSeek</td>
+                            <td>成本低、速度快</td>
+                        </tr>
+                        <tr>
+                            <td>代码生成</td>
+                            <td>DeepSeek Coder</td>
+                            <td>代码专用模型</td>
+                        </tr>
+                        <tr>
+                            <td>向量化</td>
+                            <td>text-embedding-3-small</td>
+                            <td>性价比高</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>4.5 不调用大模型的环节</h3>
+            <div class="flow-step">
+                <h4>以下环节直接执行，不需要调用 LLM</h4>
+                <ul>
+                    <li><strong>SQL 执行</strong>：工具直接调用数据库</li>
+                    <li><strong>文件读写</strong>：工具直接操作文件系统</li>
+                    <li><strong>API 调用</strong>：工具直接调用外部 API</li>
+                    <li><strong>图表渲染</strong>：matplotlib/echarts 渲染</li>
+                    <li><strong>数据导出</strong>：pandas 导出 CSV/Excel</li>
+                    <li><strong>向量搜索</strong>：pgvector 相似度搜索</li>
+                    <li><strong>缓存查询</strong>：Redis 缓存命中直接返回</li>
+                </ul>
+            </div>
+
+            <h3>4.6 Token 优化策略</h3>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>🗜️ 上下文压缩</h4>
+                    <p>使用 LongLMLingua 压缩长文本 (3-6x 压缩率)</p>
+                </div>
+                <div class="feature-card">
+                    <h4>⬇️ 模型降级</h4>
+                    <p>简单任务使用便宜模型 (DeepSeek)</p>
+                </div>
+                <div class="feature-card">
+                    <h4>💾 缓存复用</h4>
+                    <p>相似问题的执行计划缓存</p>
+                </div>
+                <div class="feature-card">
+                    <h4>⏱️ 提前终止</h4>
+                    <p>达到目标后不继续多余步骤</p>
+                </div>
+            </div>
+        </section>
+
         <!-- 上下文管理 -->
         <section class="section" id="context">
-            <h2>3. 上下文管理设计（Letta）</h2>
+            <h2>5. 上下文管理设计（Letta）</h2>
 
             <h3>3.1 记忆架构</h3>
             <div class="architecture-diagram">┌─────────────────────────────────────────────────────────────────┐
@@ -665,7 +1204,7 @@
 
         <!-- 模型管理 -->
         <section class="section" id="model">
-            <h2>4. 模型管理设计（LiteLLM）</h2>
+            <h2>6. 模型管理设计（LiteLLM）</h2>
 
             <h3>4.1 模型路由策略</h3>
             <div class="feature-grid">
@@ -709,7 +1248,7 @@ router_settings:
 
         <!-- 工具管理 -->
         <section class="section" id="tools">
-            <h2>5. Tool/Skill/MCP 管理</h2>
+            <h2>7. Tool/Skill/MCP 管理</h2>
 
             <h3>5.1 内置工具列表</h3>
             <div class="table-container">
@@ -784,7 +1323,7 @@ router_settings:
 
         <!-- 场景一 -->
         <section class="section" id="scenario1">
-            <h2>6. 场景一：数据导出与分析报告</h2>
+            <h2>8. 场景一：数据导出与分析报告</h2>
 
             <div class="scenario-card">
                 <h3>📊 场景描述</h3>
@@ -845,7 +1384,7 @@ Query: SELECT l.name, DATE(a.create_time), COUNT(*), AVG(a.quality_score)
 
         <!-- 场景二 -->
         <section class="section" id="scenario2">
-            <h2>7. 场景二：个人周报生成</h2>
+            <h2>9. 场景二：个人周报生成</h2>
 
             <div class="scenario-card">
                 <h3>📝 场景描述</h3>
@@ -924,7 +1463,7 @@ Query: SELECT l.name, DATE(a.create_time), COUNT(*), AVG(a.quality_score)
 
         <!-- 场景三 -->
         <section class="section" id="scenario3">
-            <h2>8. 场景三：批量评测结果处理</h2>
+            <h2>10. 场景三：批量评测结果处理</h2>
 
             <div class="scenario-card">
                 <h3>📈 场景描述</h3>
@@ -982,7 +1521,7 @@ Query: SELECT l.name, DATE(a.create_time), COUNT(*), AVG(a.quality_score)
 
         <!-- API 设计 -->
         <section class="section" id="api">
-            <h2>9. API 设计</h2>
+            <h2>11. API 设计</h2>
 
             <h3>9.1 核心 API</h3>
             <div class="table-container">
@@ -1047,7 +1586,7 @@ Query: SELECT l.name, DATE(a.create_time), COUNT(*), AVG(a.quality_score)
 
         <!-- 数据库设计 -->
         <section class="section" id="database">
-            <h2>10. 数据库设计</h2>
+            <h2>12. 数据库设计</h2>
 
             <h3>10.1 核心表</h3>
             <div class="table-container">
@@ -1107,7 +1646,7 @@ Query: SELECT l.name, DATE(a.create_time), COUNT(*), AVG(a.quality_score)
 
         <!-- 部署架构 -->
         <section class="section" id="deployment">
-            <h2>11. 部署架构</h2>
+            <h2>13. 部署架构</h2>
 
             <h3>11.1 Docker Compose</h3>
             <div class="feature-grid">
@@ -1140,7 +1679,7 @@ Query: SELECT l.name, DATE(a.create_time), COUNT(*), AVG(a.quality_score)
 
         <!-- 开发路线图 -->
         <section class="section" id="roadmap">
-            <h2>12. 开发路线图</h2>
+            <h2>14. 开发路线图</h2>
 
             <h3>Phase 1: MVP (2-3 周)</h3>
             <div class="table-container">
